@@ -1,0 +1,43 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "PyTorch Distributed Debug",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/train.py",
+            "console": "integratedTerminal",
+            "env": {
+                "MASTER_ADDR": "localhost",
+                "MASTER_PORT": "29500",
+                "WORLD_SIZE": "1",
+                "RANK": "0",
+                "PYTHONUNBUFFERED": "1"
+            },
+            "args": [
+
+            ],
+            "preLaunchTask": "",
+            "postDebugTask": ""
+        },
+        {
+            "name": "Validate",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/validate.py",
+            "console": "integratedTerminal",
+            "env": {
+                "MASTER_ADDR": "localhost",
+                "MASTER_PORT": "29500",
+                "WORLD_SIZE": "1",
+                "RANK": "0",
+                "PYTHONUNBUFFERED": "1"
+            },
+            "args": [
+
+            ],
+            "preLaunchTask": "",
+            "postDebugTask": ""
+        }
+    ]
+}
