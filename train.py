@@ -13,7 +13,7 @@ from dataset import *
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
-from model.IFNet_BIVSR_7images import *
+# from model.IFNet_BIVSR_7images import *
 from model.VimeoSeptuplet import *
 device = torch.device("cuda")
 
@@ -191,7 +191,7 @@ def evaluate(model, val_data, nr_eval, local_rank, writer_val):
                 setpsnr = setpsnr + single_psnr
             setpsnr = setpsnr / 3
             psnr_list.append(setpsnr)
-            print("--\n")
+            # print("--\n")
             # psnr = -10 * math.log10(torch.mean((merged_img[j] - gt[j]) * (merged_img[j] - gt[j])).cpu().data)
             # psnr_list_teacher.append(psnr)
         # gt = (gt[][:,-3:].permute(0, 2, 3, 1).cpu().numpy() * 255).astype('uint8')
@@ -213,7 +213,7 @@ def evaluate(model, val_data, nr_eval, local_rank, writer_val):
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=200, type=int)
-    parser.add_argument('--batch_size', default=16, type=int, help='minibatch size')
+    parser.add_argument('--batch_size', default=8, type=int, help='minibatch size')
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size')
     args = parser.parse_args()

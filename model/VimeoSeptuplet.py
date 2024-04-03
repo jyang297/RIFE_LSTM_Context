@@ -6,13 +6,14 @@ import numpy as np
 import random
 from torch.utils.data import DataLoader, Dataset
 
-data_root = '/home/jyzhao/Code/Datasets/vimeo_septuplet'
+# data_root = '/home/jyzhao/Code/Datasets/vimeo_septuplet'
+data_root = '/home/jyang297/scratch/vimeo_septuplet'
 
 
 cv2.setNumThreads(1)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class VimeoDatasetSep(Dataset):
-    def __init__(self, dataset_name, batch_size=32):
+    def __init__(self, dataset_name, batch_size=16):
         self.batch_size = batch_size
         self.dataset_name = dataset_name        
         self.h = 256

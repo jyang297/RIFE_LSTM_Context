@@ -12,7 +12,8 @@ import torch.nn.functional as F
 from model.loss import *
 from model.laplacian import *
 from model.refine import *
-from model.IFNet_BIVSR_7images import *
+# from model.IFNet_BIVSR_7images import *
+from model.LSTMmodules import *
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.autograd.set_detect_anomaly(True)
 class Model:

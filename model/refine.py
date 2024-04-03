@@ -78,7 +78,7 @@ class Unet(nn.Module):
         super(Unet, self).__init__()
         self.downforwardori = downContext()
         self.downbackwardori = downContext()
-        self.down0 = Conv2(17+ 16+16, 2*cu)
+        self.down0 = Conv2(17 + 16+16, 2*cu)
         self.down1 = Conv2(4*cu, 4*cu)
         self.down2 = Conv2(8*cu, 8*cu)
         self.down3 = Conv2(16*cu, 16*cu)

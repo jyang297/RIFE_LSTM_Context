@@ -58,9 +58,11 @@ class FBwardExtractor(nn.Module):
         # set stride = 2 to downsample
         # as for 224*224, the current output shape is 112*112
         self.out_plane = out_plane
-        self.fromimage = conv(in_plane, c, kernel_size=3, stride=2, padding=1)
+        self.fromimage = conv(in_plane, c, kernel_size=3, stride=1, padding=1)
+        self.downsample = conv(c, 2*c, kernel_size=3, stride=2, padding=1)
+
         self.conv0 = nn.Sequential(
-            conv(c, 2*c, 3, 1, 1),
+            conv(2*c, 2*c, 3, 1, 1),
             conv(2*c, 4*c, 3, 1, 1),
             conv(4*c, 2*c, 3, 1, 1),
             conv(2*c, self.out_plane, 3, 1, 1),
@@ -72,16 +74,22 @@ class FBwardExtractor(nn.Module):
     def forward(self, allframes):
         # all frames: B*21*H*W  --> 
         # x is concated frames [0,2,4,6] -> [(4*3),112,112] 
+        forwardFeatureList = []
         for i in range(0,4):
-            x = allframes[:,3*i:3*i+3].clone()
-            y = self.fromimage(x)
-            x = x + self.conv0(y)
-            x = self.upsample(x)
+            x = allframes[:, 3*i:3*i+3].clone()
+            y = self.fromimage(x)  # 224*224 -> 224*224
+            
+            x = self.downsample(y)  # 224*224 -> 112*112
+            x = self.conv0(x)       # Pass through conv layers
+            
+            # Upsample and add to the original y tensor
+            x = self.upsample(x) + y
+            
+            forwardFeatureList.append(x)
+            # self.forwardFeatureList.append(x)
 
-            self.forwardFeatureList.append(x)
 
-
-        return self.forwardFeatureList
+        return forwardFeatureList
     # Output: BNCHW
 
 
@@ -92,7 +100,7 @@ class unitConvGRU(nn.Module):
     # F_t = Sigmoid(Conv(x_t;W_{xf}) + Conv(h_{t-1};W_{hi}) + b_i)
     def __init__(self, hidden_dim=128, input_dim=c):
         # 192 = 4*4*12  
-        super(self).__init__()
+        super().__init__()
         self.convz = nn.Conv2d(hidden_dim+input_dim, hidden_dim, 3, padding=1)
         self.convr = nn.Conv2d(hidden_dim+input_dim, hidden_dim, 3, padding=1)
         self.convq = nn.Conv2d(hidden_dim+input_dim, hidden_dim, 3, padding=1)
@@ -182,7 +190,7 @@ class Modified_IFNet(nn.Module):
 # c = 48
 class ConvGRUFeatures(nn.Module):
     def __init__(self):
-        super(self).__init__()
+        super().__init__()
         # current encoder: all frames ==> all features 
         self.img2Fencoder = FBwardExtractor()
         self.img2Bencoder = FBwardExtractor()
@@ -198,7 +206,7 @@ class ConvGRUFeatures(nn.Module):
         bcontextlist = []
         fallfeatures = self.img2Fencoder(allframes)
         ballfeatures = self.img2Bencoder(allframes)
-        b, _, h, w = allframes.shape()
+        b, _, h, w = allframes.size()
 
 
         # forward GRU 
@@ -210,11 +218,11 @@ class ConvGRUFeatures(nn.Module):
         # I skipped the 0 -> first image
         for i in range(0,4):
             if i == 0:
-                fhidden = self.forwardgru(forward_hidden_initial, fallfeatures[:,i])
-                bhidden = self.backwardgru(backward_hidden_initial, ballfeatures[:,-i-1])
+                fhidden = self.forwardgru(forward_hidden_initial, fallfeatures[i])
+                bhidden = self.backwardgru(backward_hidden_initial, ballfeatures[-i-1])
             else:
-                fhidden = self.forwardgru(fhidden, fallfeatures[:,i])
-                bhidden = self.backwardgru(bhidden, ballfeatures[:,-i-1])
+                fhidden = self.forwardgru(fhidden, fallfeatures[i])
+                bhidden = self.backwardgru(bhidden, ballfeatures[-i-1])
                 fcontextlist.append(fhidden)
                 bcontextlist.append(bhidden)
 
@@ -238,6 +246,9 @@ class VSRbackbone(nn.Module):
         # IFnet module
         #b, n, c, h, w = allframes_N.shape()
         #allframes = allframes_N.view(b,n*c,h,w)
+        Sum_loss_context = torch.tensor(0.0, device='cuda' if torch.cuda.is_available() else 'gpu')
+        Sum_loss_distill = torch.tensor(0.0, device='cuda' if torch.cuda.is_available() else 'gpu')
+        Sum_loss_tea = torch.tensor(0.0, device='cuda' if torch.cuda.is_available() else 'gpu')
         output_allframes = []
         output_onlyteacher = []
         flow_list = []
@@ -249,7 +260,7 @@ class VSRbackbone(nn.Module):
             gt = allframes[:, 6*i+3:6*i+6]
             img1 = allframes[:, 6*i+6:6*i+9]
             imgs_and_gt = torch.cat([img0,img1,gt],dim=1)
-            flow, mask, merged, flow_teacher, merged_teacher, loss_distill, loss_tea, loss_pred = self.Fusion(imgs_and_gt, fallfeatures[:, i], ballfeatures[:, -(1+i)])
+            flow, mask, merged, flow_teacher, merged_teacher, loss_distill, loss_tea, loss_pred = self.Fusion(imgs_and_gt, fallfeatures[i], ballfeatures[-(1+i)])
             # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(allframes)
             Sum_loss_distill += loss_distill 
             Sum_loss_context += 1/3 * loss_pred
