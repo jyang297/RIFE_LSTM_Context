@@ -7,6 +7,7 @@ from model.warplayer import warp
 from model.refine import *
 from model.myContext import *
 from model.loss import *
+from model.myLossset import *
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 c = 48
 
@@ -180,8 +181,9 @@ class Modified_IFNet(nn.Module):
         # predictimage = tmp
         #merged[2] = torch.clamp(tPredict, 0, 1)
         predictimage = torch.clamp(merged[2] + tmp, 0, 1)
-        loss_pred = (((predictimage - gt) **2+eps).mean(1,True)**0.5).mean()
-        
+        # loss_pred = (((predictimage - gt) **2+eps).mean(1,True)**0.5).mean()
+        # distance = fLPIPS(img1,img2)
+        loss_pred = fLPIPS(predictimage, gt)
         #loss_pred = (((merged[2] - gt) **2).mean(1,True)**0.5).mean()
         loss_tea = (self.lap(merged_teacher, gt)).mean()
 

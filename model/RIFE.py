@@ -81,7 +81,7 @@ class Model:
         # loss_tea = (self.lap(merged_teacher, gt)).mean()
         if training:
             self.optimG.zero_grad()
-            loss_G = Sum_loss_context + Sum_loss_tea + Sum_loss_distill * 0.01 # when training RIFEm, the weight of loss_distill should be 0.005 or 0.002
+            loss_G = Sum_loss_context + Sum_loss_tea/(Sum_loss_tea/Sum_loss_context).detach() + Sum_loss_distill/(Sum_loss_distill/Sum_loss_context).detach() * 0.01 # when training RIFEm, the weight of loss_distill should be 0.005 or 0.002
             loss_G.backward()
             torch.nn.utils.clip_grad_norm_(self.flownet.parameters(), max_norm=1.0)
             self.optimG.step()

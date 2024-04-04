@@ -3,3 +3,4 @@ validate/
 model/__pycache__/
 slurm-27882347.out
 error/
+__pycache__/
